@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+.tailwind-check {
+  @apply bg-blue-600 text-white p-6;
+}
