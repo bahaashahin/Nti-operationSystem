@@ -187,14 +187,14 @@ function SessionCard({ session, group, credentials, user, role, onError }) {
   }
 
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="session-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold text-[#483BFF]">
             SESSION {session.sessionNumber} / 10
           </p>
 
-          <h2 className="mt-1 text-lg font-bold">{session.groupCode}</h2>
+          <h2 className="mt-1 text-lg font-bold break-words">{session.groupCode}</h2>
 
           <p className="text-sm text-slate-500">
             {group?.trackName || session.trackName || "—"}
@@ -498,8 +498,8 @@ export default function Sessions({
   ]);
 
   return (
-    <section>
-      <div className="mb-5 flex flex-wrap gap-2">
+    <section className="sessions-page">
+      <div className="mb-5 flex flex-wrap gap-2 sessions-tabs">
         {[
           ["today", "Today"],
           ["upcoming", "Upcoming"],
@@ -524,7 +524,7 @@ export default function Sessions({
         ))}
       </div>
 
-      <div className="mb-5 grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="sessions-filters mb-5 grid gap-4 rounded-2xl border border-slate-200 bg-white p-5">
         <label className="text-sm font-semibold">
           Date
           <input
@@ -614,7 +614,7 @@ export default function Sessions({
           No sessions match these filters.
         </div>
       ) : (
-        <div className="grid gap-5 xl:grid-cols-2">
+        <div className="sessions-cards grid gap-5">
           {filtered.map((session) => (
             <SessionCard
               key={session.id}

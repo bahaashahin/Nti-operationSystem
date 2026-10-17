@@ -1,14 +1,27 @@
+/* Coaching Ops — complete responsive app layout */
 :root {
   --brand: #483bff;
   --brand-dark: #3729e6;
 }
-
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
 .app-layout {
   min-height: 100vh;
+  width: 100%;
+  min-width: 0;
   background: #f8f9fc;
   color: #20213a;
 }
-
 .app-sidebar {
   position: fixed;
   inset: 0 auto 0 0;
@@ -21,14 +34,12 @@
   background: #171828;
   color: #fff;
 }
-
 .sidebar-brand {
   display: flex;
   align-items: center;
   gap: 11px;
   padding: 2px 10px 24px;
 }
-
 .sidebar-logo {
   display: grid;
   place-items: center;
@@ -38,22 +49,18 @@
   border-radius: 12px;
   background: var(--brand);
 }
-
 .sidebar-brand strong,
 .sidebar-brand span {
   display: block;
 }
-
 .sidebar-brand strong {
   font-size: 16px;
 }
-
 .sidebar-brand span {
   margin-top: 3px;
   color: #a9adbf;
   font-size: 11px;
 }
-
 .sidebar-nav {
   display: grid;
   align-content: start;
@@ -61,7 +68,6 @@
   min-height: 0;
   overflow-y: auto;
 }
-
 .sidebar-link,
 .sidebar-logout {
   display: flex;
@@ -78,28 +84,23 @@
   font-weight: 600;
   text-align: left;
 }
-
 .sidebar-link {
   padding: 12px 13px;
 }
-
 .sidebar-link:hover,
 .sidebar-logout:hover {
   background: #292b40;
   color: #fff;
 }
-
 .sidebar-link.active {
   background: var(--brand);
   color: #fff;
 }
-
 .sidebar-footer {
   margin-top: auto;
   padding: 15px 5px 0;
   border-top: 1px solid #34364a;
 }
-
 .sidebar-email {
   display: block;
   overflow: hidden;
@@ -109,38 +110,53 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .sidebar-logout {
   padding: 11px;
 }
-
 .app-main {
   min-width: 0;
   min-height: 100vh;
   margin-left: 248px;
   padding: 28px;
 }
-
 .app-content {
+  width: 100%;
   max-width: 1300px;
+  min-width: 0;
   margin: 0 auto;
 }
-
+.app-content > *,
+.app-content section,
+.app-content .grid > * {
+  min-width: 0;
+}
+.app-content input,
+.app-content select,
+.app-content textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+.app-content .overflow-x-auto {
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+.app-content a,
+.app-content button {
+  touch-action: manipulation;
+}
 .page-heading {
   margin-bottom: 24px;
 }
-
 .page-heading h1 {
   margin: 4px 0 5px;
   font-size: clamp(24px, 3vw, 31px);
+  overflow-wrap: anywhere;
 }
-
 .page-heading p {
   margin: 0;
   color: #73778c;
   font-size: 13px;
 }
-
 .group-picker {
   display: flex;
   flex-wrap: wrap;
@@ -152,7 +168,6 @@
   border-radius: 16px;
   background: #fff;
 }
-
 .group-picker label {
   display: grid;
   gap: 7px;
@@ -160,7 +175,6 @@
   font-size: 13px;
   font-weight: 700;
 }
-
 .group-picker select {
   height: 42px;
   padding: 0 12px;
@@ -170,169 +184,95 @@
   color: #20213a;
   font: inherit;
 }
-
 .group-picker select:focus {
   outline: 2px solid var(--brand);
 }
-
 .group-picker-count {
   padding-bottom: 12px;
   color: #73778c;
   font-size: 12px;
 }
-
-@media (max-width: 800px) {
-  .app-sidebar {
-    position: sticky;
-    inset: 0 0 auto;
-    width: 100%;
-    height: auto;
-    padding: 10px 14px;
-  }
-
-  .sidebar-brand {
-    padding: 0 2px 10px;
-  }
-
-  .sidebar-nav {
-    display: flex;
-    gap: 6px;
-    overflow-x: auto;
-  }
-
-  .sidebar-link {
-    flex: none;
-    width: auto;
-    padding: 9px 11px;
-    white-space: nowrap;
-  }
-
-  .sidebar-footer {
-    position: absolute;
-    top: 10px;
-    right: 14px;
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-
-  .sidebar-email,
-  .sidebar-logout span {
-    display: none;
-  }
-
-  .sidebar-logout {
-    width: 40px;
-    height: 40px;
-    justify-content: center;
-  }
-
-  .app-main {
-    min-height: auto;
-    margin-left: 0;
-    padding: 20px 14px;
-  }
-}
-/* ==========================================
-   RESPONSIVE IMPROVEMENTS
-   ========================================== */
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html,
-body,
-#root {
-  min-width: 0;
-  width: 100%;
-}
-
-.app-layout {
+/* Sessions: explicit minmax(0,1fr) prevents form fields from stretching the grid. */
+.sessions-page {
   width: 100%;
   min-width: 0;
-  overflow-x: clip;
 }
-
-.app-main,
-.app-content {
+.sessions-filters {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+.sessions-filters > label {
+  display: block;
   min-width: 0;
-  width: 100%;
-}
-
-.app-content > * {
-  min-width: 0;
-}
-
-.app-content section {
-  min-width: 0;
-}
-
-.app-content input,
-.app-content select,
-.app-content textarea {
   max-width: 100%;
 }
-
-.app-content .overflow-x-auto {
+.sessions-filters input,
+.sessions-filters select {
+  width: 100%;
+  min-width: 0;
   max-width: 100%;
-  -webkit-overflow-scrolling: touch;
 }
-
-.app-content table {
-  border-collapse: collapse;
+.sessions-filters .relative {
+  min-width: 0;
 }
-
-.app-content th,
-.app-content td {
-  vertical-align: middle;
+.sessions-cards {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
 }
-
-.app-content a,
-.app-content button {
-  touch-action: manipulation;
+.session-card {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
-
-@media (min-width: 801px) and (max-width: 1199px) {
+.session-card .grid > * {
+  min-width: 0;
+}
+.session-card a,
+.session-card button {
+  max-width: 100%;
+}
+@media (min-width: 1650px) {
+  .sessions-filters {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+  .sessions-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (min-width: 1100px) and (max-width: 1649px) {
+  .sessions-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+@media (min-width: 801px) and (max-width: 1099px) {
   .app-sidebar {
     width: 220px;
   }
-
   .app-main {
     margin-left: 220px;
-    padding: 22px;
+    padding: 20px;
   }
-
-  .app-content {
-    max-width: 100%;
+  .sessions-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
-
 @media (max-width: 800px) {
   .app-sidebar {
     position: relative;
-    top: auto;
-    left: auto;
-    right: auto;
-    bottom: auto;
+    inset: auto;
     width: 100%;
     height: auto;
     min-height: 0;
     padding: 12px;
     gap: 10px;
   }
-
   .sidebar-brand {
     min-height: 44px;
     padding: 0 48px 0 2px;
   }
-
   .sidebar-brand strong {
     font-size: 15px;
   }
-
   .sidebar-nav {
     display: flex;
     width: 100%;
@@ -343,14 +283,14 @@ body,
     scrollbar-width: thin;
     -webkit-overflow-scrolling: touch;
   }
-
   .sidebar-link {
     flex: 0 0 auto;
+    width: auto;
     min-height: 42px;
     padding: 10px 12px;
     font-size: 12px;
+    white-space: nowrap;
   }
-
   .sidebar-footer {
     position: absolute;
     top: 12px;
@@ -359,76 +299,75 @@ body,
     padding: 0;
     border: 0;
   }
-
+  .sidebar-email,
+  .sidebar-logout span {
+    display: none;
+  }
   .sidebar-logout {
     width: 42px;
     height: 42px;
+    justify-content: center;
     padding: 0;
   }
-
   .app-main {
     min-height: 0;
     margin-left: 0;
     padding: 18px 14px 28px;
   }
-
   .page-heading {
     margin-bottom: 18px;
   }
-
-  .page-heading h1 {
-    font-size: clamp(21px, 5vw, 28px);
-    line-height: 1.25;
-    overflow-wrap: anywhere;
-  }
-
   .group-picker {
     padding: 14px;
     gap: 12px;
   }
-
   .group-picker label {
-    flex: 1 1 100%;
     min-width: 0;
+    width: 100%;
   }
-
   .group-picker-count {
     padding-bottom: 0;
   }
+  .sessions-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 }
-
-@media (max-width: 480px) {
+@media (max-width: 520px) {
   .app-main {
     padding: 14px 10px 24px;
   }
-
   .sidebar-logo {
     width: 36px;
     height: 36px;
   }
-
   .sidebar-link {
     font-size: 11px;
     padding: 9px 10px;
   }
-
+  .sessions-filters {
+    grid-template-columns: minmax(0, 1fr) !important;
+    padding: 14px !important;
+  }
+  .sessions-tabs button {
+    flex: 1 1 calc(50% - 8px);
+  }
+  .session-card {
+    padding: 16px !important;
+  }
+  .session-card .mt-4.flex.flex-wrap > a,
+  .session-card .mt-4.flex.flex-wrap > button {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
   .app-content .rounded-2xl {
     border-radius: 14px;
   }
-
   .app-content .p-6 {
     padding: 16px;
   }
-
   .app-content .p-5 {
     padding: 14px;
   }
-
-  .app-content .flex-wrap > a,
-  .app-content .flex-wrap > button {
-    max-width: 100%;
-  }
-
   .app-content textarea {
     font-size: 14px;
   }
