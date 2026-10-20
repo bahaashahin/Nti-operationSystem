@@ -14,18 +14,21 @@ import { db } from "./firebase";
 import { cairoToday, dateLabel } from "./importExcel";
 
 const INPUT =
-  "mt-2 block w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-[#483BFF]";
+  "mt-1.5 block w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-800 outline-none transition-all focus:border-[#483BFF] focus:ring-2 focus:ring-[#483BFF]/20";
 
 const BUTTON =
-  "inline-flex items-center justify-center gap-2 rounded-lg bg-[#483BFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3729E6] disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-xl bg-[#483BFF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#3729E6] active:scale-[0.99] disabled:opacity-50 transition-all";
+
+const SECONDARY_BUTTON =
+  "inline-flex items-center justify-center gap-2 rounded-xl bg-[#F0EFFF] px-4 py-2 text-sm font-semibold text-[#3729E6] hover:bg-[#E4E1FF] active:scale-[0.99] transition-all";
 
 const SESSION_STATUSES = ["Scheduled", "In progress", "Completed", "Cancelled"];
 
 const STATUS_COLORS = {
-  Scheduled: "bg-blue-50 text-blue-700",
-  "In progress": "bg-amber-50 text-amber-700",
-  Completed: "bg-emerald-50 text-emerald-700",
-  Cancelled: "bg-red-50 text-red-700",
+  Scheduled: "bg-blue-50 text-blue-700 border border-blue-200",
+  "In progress": "bg-amber-50 text-amber-700 border border-amber-200",
+  Completed: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  Cancelled: "bg-rose-50 text-rose-700 border border-rose-200",
 };
 
 export function sessionDate(session) {
@@ -167,14 +170,21 @@ function SessionCard({ session, group, credentials, user, role, onError }) {
         updatedAt: serverTimestamp(),
       };
 
-      if (role === "lead") {
-        const chosenDate = String(form.get("date"));
-        const chosenTime = String(form.get("time") || "").trim();
+      if (canEdit) {
+        const dateInput = form.get("date");
+        const timeInput = form.get("time");
 
-        data.overrideDate =
-          chosenDate === session.scheduledDate ? "" : chosenDate;
+        if (dateInput !== null) {
+          const chosenDate = String(dateInput);
+          data.overrideDate =
+            chosenDate === session.scheduledDate ? "" : chosenDate;
+        }
 
-        data.overrideTime = chosenTime === session.time ? "" : chosenTime;
+        if (timeInput !== null) {
+          const chosenTime = String(timeInput || "").trim();
+          data.overrideTime =
+            chosenTime === (session.time || group?.time || "") ? "" : chosenTime;
+        }
       }
 
       await updateDoc(doc(db, "sessions", session.id), data);
@@ -187,16 +197,16 @@ function SessionCard({ session, group, credentials, user, role, onError }) {
   }
 
   return (
-    <article className="session-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="session-card rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all hover:shadow-md">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-bold text-[#483BFF]">
-            SESSION {session.sessionNumber} / 10
+          <p className="text-xs font-bold uppercase tracking-wider text-[#483BFF]">
+            Session {session.sessionNumber} / 10
           </p>
 
-          <h2 className="mt-1 text-lg font-bold break-words">{session.groupCode}</h2>
+          <h2 className="mt-1 text-lg font-bold text-slate-900 break-words">{session.groupCode}</h2>
 
-          <p className="text-sm text-slate-500">
+          <p className="text-xs font-medium text-slate-500">
             {group?.trackName || session.trackName || "—"}
           </p>
         </div>
@@ -210,46 +220,51 @@ function SessionCard({ session, group, credentials, user, role, onError }) {
         </span>
       </div>
 
-      <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-        <div>
-          <span className="block text-xs text-slate-500">Date</span>
-          <strong>{dateLabel(effectiveDate)}</strong>
-
+      <div className="mt-4 grid gap-2.5 text-xs sm:grid-cols-2">
+        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+          <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Date</span>
+          <strong className="mt-0.5 block text-sm font-semibold text-slate-800">{dateLabel(effectiveDate)}</strong>
           {session.overrideDate && (
-            <span className="ml-2 text-xs text-amber-700">Rescheduled</span>
+            <span className="mt-1 inline-block rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+              Rescheduled
+            </span>
           )}
         </div>
 
-        <div>
-          <span className="block text-xs text-slate-500">Time</span>
-          <strong>{effectiveTime || "—"}</strong>
+        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+          <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Time</span>
+          <strong className="mt-0.5 block text-sm font-semibold text-slate-800">{effectiveTime || "—"}</strong>
         </div>
 
-        <div>
-          <span className="block text-xs text-slate-500">Coordinator</span>
-          <strong>
+        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+          <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Coordinator</span>
+          <strong className="mt-0.5 block text-sm font-semibold text-slate-800 break-words">
             {group?.coordinatorName || session.coordinatorName || "—"}
           </strong>
         </div>
 
-        <div>
-          <span className="block text-xs text-slate-500">Coach</span>
-          <strong>{group?.coachName || session.coachName || "—"}</strong>
+        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+          <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Coach</span>
+          <strong className="mt-0.5 block text-sm font-semibold text-slate-800 break-words">
+            {group?.coachName || session.coachName || "—"}
+          </strong>
         </div>
 
-        <div>
-          <span className="block text-xs text-slate-500">Attendance</span>
-          <strong>{session.attendanceCount ?? "Not recorded"}</strong>
+        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 sm:col-span-2">
+          <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Recorded Attendance</span>
+          <strong className="mt-0.5 block text-sm font-semibold text-slate-800">
+            {session.attendanceCount != null ? `${session.attendanceCount} students attended` : "Not recorded yet"}
+          </strong>
         </div>
       </div>
 
       {session.notes && (
-        <p className="mt-4 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-sm">
+        <p className="mt-4 whitespace-pre-wrap rounded-xl border border-slate-100 bg-slate-50 p-3.5 text-xs text-slate-700">
           {session.notes}
         </p>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-3">
+      <div className="mt-4 flex flex-wrap gap-2.5">
         {(group?.zoomLink || session.zoomLink) && (
           <a
             className={BUTTON}
@@ -257,19 +272,19 @@ function SessionCard({ session, group, credentials, user, role, onError }) {
             target="_blank"
             rel="noreferrer"
           >
-            <ExternalLink size={16} />
+            <ExternalLink size={15} />
             Open Zoom
           </a>
         )}
 
         {group?.whatsappLink && (
           <a
-            className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-all"
             href={group.whatsappLink}
             target="_blank"
             rel="noreferrer"
           >
-            <ExternalLink size={16} />
+            <ExternalLink size={14} />
             WhatsApp group
           </a>
         )}
@@ -277,7 +292,7 @@ function SessionCard({ session, group, credentials, user, role, onError }) {
         {canEdit && (
           <button
             type="button"
-            className="rounded-lg bg-[#F0EFFF] px-4 py-2 text-sm font-semibold text-[#3729E6]"
+            className={SECONDARY_BUTTON}
             onClick={() => setEditing((current) => !current)}
             disabled={saving}
           >
@@ -323,7 +338,7 @@ function SessionCard({ session, group, credentials, user, role, onError }) {
               />
             </label>
 
-            {role === "lead" && (
+            {canEdit && (
               <>
                 <label className="text-sm font-medium">
                   Session date
@@ -513,10 +528,10 @@ export default function Sessions({
               setTab(id);
               setDate("");
             }}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold ${
+            className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
               tab === id && !date
-                ? "bg-[#483BFF] text-white"
-                : "bg-white text-slate-600"
+                ? "bg-[#483BFF] text-white shadow-sm shadow-[#483BFF]/30"
+                : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80"
             }`}
           >
             {label}
@@ -524,8 +539,8 @@ export default function Sessions({
         ))}
       </div>
 
-      <div className="sessions-filters mb-5 grid gap-4 rounded-2xl border border-slate-200 bg-white p-5">
-        <label className="text-sm font-semibold">
+      <div className="sessions-filters mb-6 grid gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-600">
           Date
           <input
             type="date"
@@ -535,7 +550,7 @@ export default function Sessions({
           />
         </label>
 
-        <label className="text-sm font-semibold">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-600">
           Day
           <select
             value={day}
@@ -551,7 +566,7 @@ export default function Sessions({
           </select>
         </label>
 
-        <label className="text-sm font-semibold">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-600">
           Group
           <select
             value={groupCode}
@@ -560,14 +575,14 @@ export default function Sessions({
           >
             <option value="all">All groups</option>
             {groups.map((group) => (
-              <option key={group.id} value={group.groupCode}>
+              <option key={group.id || group.groupCode} value={group.groupCode}>
                 {group.groupCode}
               </option>
             ))}
           </select>
         </label>
 
-        <label className="text-sm font-semibold">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-600">
           Coordinator
           <select
             value={coordinator}
@@ -583,19 +598,19 @@ export default function Sessions({
           </select>
         </label>
 
-        <label className="text-sm font-semibold">
-          Search any data
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-600">
+          Search
           <span className="relative block">
             <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              size={15}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
             />
             <input
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Group, coach, status..."
-              className={`${INPUT} pl-10`}
+              className={`${INPUT} pl-9`}
             />
           </span>
         </label>

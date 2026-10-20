@@ -1,374 +1,207 @@
-/* Coaching Ops — complete responsive app layout */
+/* Coaching Ops — Modern Responsive SaaS Layout */
 :root {
   --brand: #483bff;
   --brand-dark: #3729e6;
+  --brand-light: #f0efff;
+  --bg-page: #f8f9fc;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
 }
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
+
 html,
 body,
 #root {
   width: 100%;
   min-width: 0;
   margin: 0;
+  padding: 0;
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* Prevent unwanted page-level horizontal overflow */
+body {
+  overflow-x: hidden;
+}
+
+/* App Main Container Layout */
 .app-layout {
+  display: flex;
   min-height: 100vh;
   width: 100%;
   min-width: 0;
-  background: #f8f9fc;
-  color: #20213a;
+  background-color: var(--bg-page);
 }
+
+/* Desktop Sidebar */
 .app-sidebar {
   position: fixed;
   inset: 0 auto 0 0;
-  z-index: 30;
+  z-index: 40;
   display: flex;
   flex-direction: column;
-  width: 248px;
+  width: 256px;
   height: 100vh;
-  padding: 22px 14px 16px;
   background: #171828;
   color: #fff;
 }
-.sidebar-brand {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 2px 10px 24px;
-}
-.sidebar-logo {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  flex: none;
-  border-radius: 12px;
-  background: var(--brand);
-}
-.sidebar-brand strong,
-.sidebar-brand span {
-  display: block;
-}
-.sidebar-brand strong {
-  font-size: 16px;
-}
-.sidebar-brand span {
-  margin-top: 3px;
-  color: #a9adbf;
-  font-size: 11px;
-}
-.sidebar-nav {
-  display: grid;
-  align-content: start;
-  gap: 5px;
-  min-height: 0;
-  overflow-y: auto;
-}
-.sidebar-link,
-.sidebar-logout {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  width: 100%;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: #bfc2d0;
-  cursor: pointer;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  text-align: left;
-}
-.sidebar-link {
-  padding: 12px 13px;
-}
-.sidebar-link:hover,
-.sidebar-logout:hover {
-  background: #292b40;
-  color: #fff;
-}
-.sidebar-link.active {
-  background: var(--brand);
-  color: #fff;
-}
-.sidebar-footer {
-  margin-top: auto;
-  padding: 15px 5px 0;
-  border-top: 1px solid #34364a;
-}
-.sidebar-email {
-  display: block;
-  overflow: hidden;
-  padding: 0 8px 12px;
-  color: #a9adbf;
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.sidebar-logout {
-  padding: 11px;
-}
+
+/* App Main Body */
 .app-main {
+  flex: 1;
   min-width: 0;
   min-height: 100vh;
-  margin-left: 248px;
-  padding: 28px;
+  display: flex;
+  flex-direction: column;
 }
+
+@media (min-width: 1024px) {
+  .app-main {
+    margin-left: 256px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .app-main {
+    margin-left: 0;
+  }
+}
+
+/* Sticky App Topbar */
+.app-topbar {
+  min-height: 64px;
+}
+
+/* Content Container */
 .app-content {
   width: 100%;
-  max-width: 1300px;
+  max-width: 1440px;
   min-width: 0;
   margin: 0 auto;
 }
+
 .app-content > *,
 .app-content section,
 .app-content .grid > * {
   min-width: 0;
 }
+
 .app-content input,
 .app-content select,
 .app-content textarea {
   min-width: 0;
   max-width: 100%;
 }
+
 .app-content .overflow-x-auto {
   max-width: 100%;
   -webkit-overflow-scrolling: touch;
 }
+
 .app-content a,
 .app-content button {
   touch-action: manipulation;
 }
-.page-heading {
-  margin-bottom: 24px;
-}
-.page-heading h1 {
-  margin: 4px 0 5px;
-  font-size: clamp(24px, 3vw, 31px);
-  overflow-wrap: anywhere;
-}
-.page-heading p {
-  margin: 0;
-  color: #73778c;
-  font-size: 13px;
-}
-.group-picker {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: 16px;
-  margin-bottom: 20px;
-  padding: 18px;
-  border: 1px solid #ececf3;
-  border-radius: 16px;
-  background: #fff;
-}
-.group-picker label {
-  display: grid;
-  gap: 7px;
-  min-width: min(100%, 280px);
-  font-size: 13px;
-  font-weight: 700;
-}
-.group-picker select {
-  height: 42px;
-  padding: 0 12px;
-  border: 1px solid #dedfea;
-  border-radius: 9px;
-  background: white;
-  color: #20213a;
-  font: inherit;
-}
-.group-picker select:focus {
-  outline: 2px solid var(--brand);
-}
-.group-picker-count {
-  padding-bottom: 12px;
-  color: #73778c;
-  font-size: 12px;
-}
-/* Sessions: explicit minmax(0,1fr) prevents form fields from stretching the grid. */
+
+/* Sessions Page Layout */
 .sessions-page {
   width: 100%;
   min-width: 0;
 }
+
 .sessions-filters {
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)) !important;
+  gap: 14px;
 }
+
 .sessions-filters > label {
   display: block;
   min-width: 0;
   max-width: 100%;
 }
+
 .sessions-filters input,
 .sessions-filters select {
   width: 100%;
   min-width: 0;
   max-width: 100%;
 }
+
 .sessions-filters .relative {
   min-width: 0;
 }
+
+/* Sessions Cards Grid */
 .sessions-cards {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) !important;
+  gap: 18px;
 }
-.session-card {
-  min-width: 0;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
-.session-card .grid > * {
-  min-width: 0;
-}
-.session-card a,
-.session-card button {
-  max-width: 100%;
-}
-@media (min-width: 1650px) {
-  .sessions-filters {
-    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-  }
+
+@media (min-width: 1200px) {
   .sessions-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
-@media (min-width: 1100px) and (max-width: 1649px) {
+
+@media (min-width: 1400px) {
   .sessions-filters {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
   }
 }
-@media (min-width: 801px) and (max-width: 1099px) {
-  .app-sidebar {
-    width: 220px;
-  }
-  .app-main {
-    margin-left: 220px;
-    padding: 20px;
-  }
-  .sessions-filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
+
+.session-card {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
-@media (max-width: 800px) {
-  .app-sidebar {
-    position: relative;
-    inset: auto;
-    width: 100%;
-    height: auto;
-    min-height: 0;
-    padding: 12px;
-    gap: 10px;
-  }
-  .sidebar-brand {
-    min-height: 44px;
-    padding: 0 48px 0 2px;
-  }
-  .sidebar-brand strong {
-    font-size: 15px;
-  }
-  .sidebar-nav {
-    display: flex;
-    width: 100%;
-    gap: 8px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding-bottom: 5px;
-    scrollbar-width: thin;
-    -webkit-overflow-scrolling: touch;
-  }
-  .sidebar-link {
-    flex: 0 0 auto;
-    width: auto;
-    min-height: 42px;
-    padding: 10px 12px;
-    font-size: 12px;
-    white-space: nowrap;
-  }
-  .sidebar-footer {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-  .sidebar-email,
-  .sidebar-logout span {
-    display: none;
-  }
-  .sidebar-logout {
-    width: 42px;
-    height: 42px;
-    justify-content: center;
-    padding: 0;
-  }
-  .app-main {
-    min-height: 0;
-    margin-left: 0;
-    padding: 18px 14px 28px;
-  }
-  .page-heading {
-    margin-bottom: 18px;
-  }
-  .group-picker {
-    padding: 14px;
-    gap: 12px;
-  }
-  .group-picker label {
-    min-width: 0;
-    width: 100%;
-  }
-  .group-picker-count {
-    padding-bottom: 0;
-  }
-  .sessions-filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
+
+.session-card .grid > * {
+  min-width: 0;
 }
-@media (max-width: 520px) {
-  .app-main {
-    padding: 14px 10px 24px;
-  }
-  .sidebar-logo {
-    width: 36px;
-    height: 36px;
-  }
-  .sidebar-link {
-    font-size: 11px;
-    padding: 9px 10px;
-  }
+
+.session-card a,
+.session-card button {
+  max-width: 100%;
+}
+
+/* Responsive Table Wrapper */
+.table-responsive {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Breakpoints for Mobile & Tablet refinement */
+@media (max-width: 640px) {
   .sessions-filters {
     grid-template-columns: minmax(0, 1fr) !important;
     padding: 14px !important;
   }
+
   .sessions-tabs button {
-    flex: 1 1 calc(50% - 8px);
+    flex: 1 1 calc(50% - 6px);
   }
+
   .session-card {
     padding: 16px !important;
   }
-  .session-card .mt-4.flex.flex-wrap > a,
-  .session-card .mt-4.flex.flex-wrap > button {
-    flex: 1 1 100%;
-    justify-content: center;
-  }
-  .app-content .rounded-2xl {
-    border-radius: 14px;
-  }
-  .app-content .p-6 {
-    padding: 16px;
-  }
-  .app-content .p-5 {
-    padding: 14px;
-  }
+
   .app-content textarea {
-    font-size: 14px;
+    font-size: 13.5px;
   }
 }

@@ -4,21 +4,50 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function role() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role; }
     function lead() { return signedIn() && role() == 'lead'; }
+    function management() { return signedIn() && (role() == 'lead' || role() == 'project_manager'); }
     function coordinator(email) { return signedIn() && role() == 'coordinator' && request.auth.token.email == email; }
+
     match /users/{id} {
       allow read: if signedIn() && (request.auth.uid == id || lead());
       allow write: if lead();
     }
+
     match /groups/{id} {
-      allow read: if lead() || coordinator(resource.data.coordinatorEmail);
+      allow read: if management() || coordinator(resource.data.coordinatorEmail);
       allow write: if lead();
     }
+
     match /students/{id} {
-      allow read: if lead() || coordinator(resource.data.coordinatorEmail);
+      allow read: if management() || coordinator(resource.data.coordinatorEmail);
       allow create, delete: if lead();
       allow update: if lead() || (coordinator(resource.data.coordinatorEmail)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt','updatedBy'])
         && request.resource.data.coordinatorEmail == resource.data.coordinatorEmail);
+    }
+
+    match /sessions/{id} {
+      allow read: if management() || coordinator(resource.data.coordinatorEmail);
+      allow create, delete: if lead();
+      allow update: if lead() || (coordinator(resource.data.coordinatorEmail)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','attendanceCount','notes','overrideDate','overrideTime','updatedAt','updatedBy'])
+        && request.resource.data.coordinatorEmail == resource.data.coordinatorEmail);
+    }
+
+    match /zoomCredentials/{id} {
+      allow read: if lead() || coordinator(resource.data.coordinatorEmail);
+      allow write: if lead();
+    }
+
+    match /notifications/{id} {
+      allow read: if management() || (signedIn() && (
+        resource.data.recipientEmail == request.auth.token.email ||
+        resource.data.recipientUid == request.auth.uid
+      ));
+      allow create, delete: if lead();
+      allow update: if lead() || (signedIn() && (
+        (resource.data.recipientEmail == request.auth.token.email || resource.data.recipientUid == request.auth.uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt'])
+      ));
     }
   }
 }
