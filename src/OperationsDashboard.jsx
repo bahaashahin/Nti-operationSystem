@@ -472,7 +472,48 @@ export default function OperationsDashboard({
           <span>Membership and follow-up by group</span>
         </div>
 
-        <div className="ops-table-scroll">
+        {/* Mobile View: High-usability cards without horizontal scrolling */}
+        <div className="block sm:hidden space-y-2.5">
+          {groupRows.map((group) => (
+            <div key={group.code} className="ops-mobile-card">
+              <div className="flex items-center justify-between gap-2">
+                <strong className="text-sm font-bold text-slate-900 break-words">{group.code}</strong>
+                <span className="rounded-full bg-[#F0EFFF] px-2 py-0.5 text-xs font-bold text-[#3729E6]">
+                  {group.rate}% joined
+                </span>
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
+                <span>{group.day}</span>
+                <span>·</span>
+                <span className="truncate max-w-[130px]">{group.coordinator}</span>
+                {group.coach !== "—" && (
+                  <>
+                    <span>·</span>
+                    <span className="truncate max-w-[110px]">{group.coach}</span>
+                  </>
+                )}
+              </div>
+              <div className="mt-2.5 flex items-center justify-between text-xs font-semibold">
+                <span className="text-emerald-700">{group.joined} Joined</span>
+                <span className="text-amber-700">{group.pending} Pending</span>
+                <span className="text-slate-400 font-normal">{group.total} Total</span>
+              </div>
+              <div className="ops-progress-bar-bg">
+                <div
+                  className="ops-progress-bar-fill"
+                  style={{ width: `${Math.min(100, Math.max(0, group.rate))}%` }}
+                />
+              </div>
+            </div>
+          ))}
+
+          {!groupRows.length && (
+            <p className="ops-empty">No data matches the filters.</p>
+          )}
+        </div>
+
+        {/* Desktop View: Full data table with contained scroll */}
+        <div className="hidden sm:block ops-table-scroll">
           <table>
             <thead>
               <tr>

@@ -209,15 +209,23 @@ export default function NotificationCenter({
         )}
       </button>
 
-      {/* Notifications Dropdown Panel */}
+      {/* Mobile Backdrop */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs sm:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      {/* Notifications Dropdown / Mobile Sheet Panel */}
       {open && (
         <div
           role="dialog"
           aria-label="Notification center"
-          className="absolute right-0 top-12 z-50 w-[360px] max-w-[calc(100vw-24px)] rounded-2xl border border-slate-200 bg-white shadow-xl sm:w-[420px]"
+          className="fixed inset-x-3 top-16 z-50 flex max-h-[82vh] flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl sm:absolute sm:inset-auto sm:right-0 sm:top-12 sm:w-[400px] sm:max-h-[520px]"
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-100 p-4">
+          <div className="flex items-center justify-between border-b border-slate-100 p-3.5 sm:p-4 flex-none">
             <div className="flex items-center gap-2">
               <h2 className="text-base font-bold text-slate-900">Notifications</h2>
               {unreadCount > 0 && (
@@ -227,25 +235,25 @@ export default function NotificationCenter({
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {unreadCount > 0 && (
                 <button
                   type="button"
                   onClick={markAllAsRead}
                   disabled={updating}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[#483BFF] hover:bg-[#F0EFFF] disabled:opacity-50"
+                  className="inline-flex min-h-[36px] items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-semibold text-[#483BFF] hover:bg-[#F0EFFF] active:scale-[0.98] disabled:opacity-50 transition-all"
                 >
                   <CheckCheck size={14} />
-                  Mark all read
+                  <span>Mark all read</span>
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="flex h-9 w-9 items-center justify-center rounded-xl p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:scale-95 transition-all"
                 aria-label="Close notifications"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
           </div>
@@ -333,9 +341,10 @@ export default function NotificationCenter({
                           type="button"
                           onClick={(e) => markAsRead(item, e)}
                           title="Mark as read"
-                          className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                          aria-label="Mark notification as read"
+                          className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-[#F0EFFF] hover:text-[#483BFF] active:scale-95 transition-all"
                         >
-                          <Check size={14} />
+                          <Check size={16} />
                         </button>
                       )}
                     </div>

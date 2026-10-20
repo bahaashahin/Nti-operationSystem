@@ -73,7 +73,7 @@ const STATUS_LABELS = {
 };
 
 const CARD_CLASS =
-  "rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm transition-all";
+  "rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-sm transition-all";
 
 const PRIMARY_BUTTON =
   "inline-flex items-center justify-center gap-2 rounded-xl bg-[#483BFF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#3729E6] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 transition-all";
@@ -353,7 +353,7 @@ function Login() {
     <div className="grid min-h-screen place-items-center bg-[#F8F9FC] p-4 text-slate-900">
       <form
         onSubmit={handleLogin}
-        className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white p-8 shadow-xl shadow-slate-200/50"
+        className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-8 shadow-xl shadow-slate-200/50"
       >
         <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#F0EFFF] px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#483BFF]">
           <Sparkles size={13} />
@@ -429,10 +429,12 @@ export default function App() {
   const [generating, setGenerating] = useState(false);
   const [today, setToday] = useState(cairoToday);
 
-  // New features:
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [unreadGroupMap, setUnreadGroupMap] = useState(new Map());
   const [importReport, setImportReport] = useState(null);
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : false,
+  );
 
   const role = profile?.role;
   const isLead = role === "lead";
@@ -441,6 +443,14 @@ export default function App() {
   const canViewDashboard = isLead || isProjectManager;
 
   useEffect(() => onAuthStateChanged(auth, setUser), []);
+
+  useEffect(() => {
+    function handleResize() {
+      setIsDesktop(window.innerWidth >= 1024);
+    }
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => setToday(cairoToday()), 30000);
@@ -1164,21 +1174,23 @@ export default function App() {
 
   return (
     <div className="app-layout">
-      {/* Desktop Persistent Sidebar */}
-      <aside className="app-sidebar hidden lg:flex">
-        <SidebarContent
-          page={page}
-          onPageChange={(nextPage) => {
-            setPage(nextPage);
-            setNotice("");
-          }}
-          user={user}
-          role={role}
-        />
-      </aside>
+      {/* Desktop Persistent Sidebar — strictly rendered only on desktop (>= 1024px) */}
+      {isDesktop && (
+        <aside className="app-sidebar">
+          <SidebarContent
+            page={page}
+            onPageChange={(nextPage) => {
+              setPage(nextPage);
+              setNotice("");
+            }}
+            user={user}
+            role={role}
+          />
+        </aside>
+      )}
 
-      {/* Mobile Slide-Out Drawer Navigation */}
-      {mobileMenuOpen && (
+      {/* Mobile Slide-Out Drawer Navigation — strictly rendered only on mobile/tablet */}
+      {!isDesktop && mobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
@@ -1200,30 +1212,30 @@ export default function App() {
       )}
 
       {/* Main Layout Area */}
-      <div className="app-main flex-1">
+      <div className="app-main flex-1 w-full min-w-0">
         {/* Top Navbar */}
-        <header className="app-topbar sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 py-3 backdrop-blur-md sm:px-6">
-          <div className="flex items-center gap-3">
+        <header className="app-topbar sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/80 bg-white/90 px-3 py-2.5 backdrop-blur-md sm:px-6 sm:py-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 lg:hidden shrink-0"
               aria-label="Open menu"
             >
               <Menu size={19} />
             </button>
 
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[#483BFF]">
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#483BFF] truncate">
                 NTI · Creative i-Lance
               </p>
-              <h1 className="text-base font-bold text-slate-900 sm:text-lg">
+              <h1 className="text-sm font-bold text-slate-900 sm:text-lg truncate">
                 {headings[page]}
               </h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Cairo Date Badge */}
             <div className="hidden items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 sm:flex">
               <Calendar size={14} className="text-[#483BFF]" />
@@ -1572,7 +1584,7 @@ export default function App() {
                     </div>
 
                     {/* Operational Quick Links */}
-                    <div className="mt-5 flex flex-wrap gap-4 text-sm font-semibold text-[#483BFF]">
+                    <div className="mt-5 flex flex-wrap gap-2.5 text-xs sm:text-sm font-semibold text-[#483BFF]">
                       {[
                         ["Open Zoom Link", selectedGroup.zoomLink],
                         ["Open WhatsApp Group", selectedGroup.whatsappLink],
@@ -1585,10 +1597,10 @@ export default function App() {
                             href={link}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex min-w-0 items-center gap-1.5 hover:underline"
+                            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-slate-700 hover:bg-slate-100 transition-colors"
                           >
-                            <span>{label}</span>
-                            <ExternalLink size={14} />
+                            <span className="truncate">{label}</span>
+                            <ExternalLink size={14} className="shrink-0 text-[#483BFF]" />
                           </a>
                         ))}
                     </div>
@@ -1624,36 +1636,36 @@ export default function App() {
 
                       <button
                         type="button"
-                        className={SECONDARY_BUTTON}
+                        className={`${SECONDARY_BUTTON} min-h-[44px] w-full sm:w-auto`}
                         onClick={() => copyText(message)}
                       >
                         <Copy size={15} />
-                        Copy student message
+                        <span>Copy student message</span>
                       </button>
                     </div>
 
                     <textarea
                       dir="rtl"
-                      rows={10}
+                      rows={8}
                       value={message}
                       onChange={(event) => setMessage(event.target.value)}
-                      className="block w-full min-w-0 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm leading-7 text-slate-800 outline-none focus:border-[#483BFF] focus:bg-white focus:ring-2 focus:ring-[#483BFF]/20"
+                      className="block w-full min-w-0 rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 sm:p-4 text-sm leading-7 text-slate-800 outline-none focus:border-[#483BFF] focus:bg-white focus:ring-2 focus:ring-[#483BFF]/20"
                     />
 
-                    <div className="mt-4 flex flex-wrap gap-3">
+                    <div className="mt-4 flex flex-wrap gap-2.5">
                       <button
                         type="button"
-                        className={SECONDARY_BUTTON}
+                        className={`${SECONDARY_BUTTON} min-h-[44px] w-full sm:w-auto`}
                         onClick={() => copyText(coachMessage(selectedGroup))}
                       >
                         <Copy size={15} />
-                        Copy coach message
+                        <span>Copy coach message</span>
                       </button>
 
                       {formatPhone(selectedGroup.coachPhone) &&
                         selectedGroup.whatsappLink && (
                           <a
-                            className={PRIMARY_BUTTON}
+                            className={`${PRIMARY_BUTTON} min-h-[44px] w-full sm:w-auto`}
                             href={whatsappUrl(
                               selectedGroup.coachPhone,
                               coachMessage(selectedGroup),
@@ -1662,7 +1674,7 @@ export default function App() {
                             rel="noreferrer"
                           >
                             <MessageCircle size={16} />
-                            Message Coach via WhatsApp
+                            <span>Message Coach via WhatsApp</span>
                           </a>
                         )}
                     </div>
@@ -1691,7 +1703,86 @@ export default function App() {
                       />
                     </div>
 
-                    <div className="w-full min-w-0 overflow-x-auto rounded-xl border border-slate-100">
+                    {/* Mobile Students Cards (< 768px) */}
+                    <div className="space-y-3 md:hidden">
+                      {filteredStudents.map((student) => (
+                        <div
+                          key={student.id}
+                          className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-xs"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <strong className="block text-sm font-bold text-slate-900 break-words">
+                                {student.name || "Unnamed Student"}
+                              </strong>
+                              <span className="block text-xs font-mono text-slate-400 mt-0.5">
+                                {student.userId || "—"}
+                              </span>
+                            </div>
+                            {student.mobile && (
+                              <span className="text-xs font-mono text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 shrink-0">
+                                {student.mobile}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="mt-3">
+                            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                              Status
+                            </label>
+                            {isProjectManager ? (
+                              <span className="inline-block rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">
+                                {STATUS_LABELS[student.status] ||
+                                  student.status ||
+                                  "Not contacted"}
+                              </span>
+                            ) : (
+                              <select
+                                value={student.status || "لم يُرسل"}
+                                onChange={(event) =>
+                                  changeStatus(student, event.target.value)
+                                }
+                                className="w-full min-h-[44px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 outline-none focus:border-[#483BFF] focus:ring-2 focus:ring-[#483BFF]/20"
+                              >
+                                {STATUSES.map((status) => (
+                                  <option key={status} value={status}>
+                                    {STATUS_LABELS[status] || status}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
+
+                          <div className="mt-3 pt-3 border-t border-slate-100">
+                            {formatPhone(student.mobile) &&
+                            selectedGroup.whatsappLink ? (
+                              <a
+                                className={`${PRIMARY_BUTTON} w-full min-h-[44px] py-2.5 px-4 text-xs`}
+                                href={whatsappUrl(student.mobile, message)}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <MessageCircle size={15} />
+                                <span>Send WhatsApp Template</span>
+                              </a>
+                            ) : (
+                              <span className="block text-center text-xs text-amber-700 bg-amber-50 rounded-lg py-2.5 px-3 border border-amber-100">
+                                Missing phone or group link
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+
+                      {!filteredStudents.length && (
+                        <div className="rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-400">
+                          No students found.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Desktop Students Table (>= 768px) */}
+                    <div className="hidden md:block w-full min-w-0 overflow-x-auto rounded-xl border border-slate-100">
                       <table className="w-full min-w-[650px] text-left text-sm">
                         <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
                           <tr>
@@ -1789,6 +1880,45 @@ export default function App() {
           )}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation Bar (< 1024px) */}
+      {!isDesktop && (
+        <nav className="mobile-bottom-nav lg:hidden" aria-label="Mobile Navigation">
+          {NAV_ITEMS.filter((item) => item.roles.includes(role)).map(
+            ({ id, label, icon: Icon }) => {
+              const isActive = page === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    setPage(id);
+                    setNotice("");
+                  }}
+                  className={`mobile-bottom-nav-item ${isActive ? "active" : ""}`}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  <span className="mobile-nav-icon-wrap">
+                    <Icon size={19} />
+                  </span>
+                  <span className="truncate max-w-[64px]">{label}</span>
+                </button>
+              );
+            },
+          )}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(true)}
+            className="mobile-bottom-nav-item"
+            aria-label="Open full menu and profile"
+          >
+            <span className="mobile-nav-icon-wrap">
+              <Menu size={19} />
+            </span>
+            <span>More</span>
+          </button>
+        </nav>
+      )}
 
       {/* Import Results Report Modal */}
       {importReport && (

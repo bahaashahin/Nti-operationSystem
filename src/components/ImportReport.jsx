@@ -36,29 +36,29 @@ export default function ImportReport({ report, onClose }) {
   const hasIssues = skippedGroups.length > 0 || invalidRows.length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
-      <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-3 sm:p-4 backdrop-blur-sm">
+      <div className="relative flex max-h-[90vh] w-full max-w-[calc(100vw-24px)] sm:max-w-3xl flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 p-5">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between border-b border-slate-100 p-3.5 sm:p-5">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div
-              className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+              className={`flex h-9 w-9 sm:h-10 sm:w-10 flex-none items-center justify-center rounded-xl ${
                 invalidRows.length > 0
                   ? "bg-amber-100 text-amber-700"
                   : "bg-emerald-100 text-emerald-700"
               }`}
             >
               {invalidRows.length > 0 ? (
-                <AlertTriangle size={20} />
+                <AlertTriangle size={18} />
               ) : (
-                <CheckCircle2 size={20} />
+                <CheckCircle2 size={18} />
               )}
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 truncate">
                 Excel Import Results Report
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 truncate">
                 Processed {totalGroupsProcessed} group entries from workbook
               </p>
             </div>
@@ -67,7 +67,7 @@ export default function ImportReport({ report, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="flex h-9 w-9 flex-none items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:scale-95 transition-all"
             aria-label="Close report"
           >
             <X size={18} />
@@ -75,9 +75,9 @@ export default function ImportReport({ report, onClose }) {
         </div>
 
         {/* Content body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-4 sm:space-y-5">
           {/* Main KPI Grid */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
             <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3.5">
               <span className="text-xs font-semibold text-emerald-800">
                 New Groups Created

@@ -79,9 +79,10 @@ export function ZoomCredentials({ credentials, onError }) {
                 type="button"
                 title="Copy Zoom User ID"
                 aria-label="Copy Zoom User ID"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/90 bg-white text-slate-600 hover:bg-slate-100 shrink-0 transition-colors"
                 onClick={() => copy(credentials.zoomUserId, "User ID")}
               >
-                <Copy size={16} />
+                <Copy size={15} />
               </button>
             )}
           </div>
@@ -90,7 +91,7 @@ export function ZoomCredentials({ credentials, onError }) {
         <div>
           <span className="text-xs text-slate-500">Password</span>
 
-          <div className="mt-1 flex items-center gap-3">
+          <div className="mt-1 flex items-center gap-2">
             <span className="break-all font-mono text-sm">
               {credentials.zoomPassword
                 ? visible
@@ -100,25 +101,27 @@ export function ZoomCredentials({ credentials, onError }) {
             </span>
 
             {credentials.zoomPassword && (
-              <>
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
                   title={visible ? "Hide password" : "Show password"}
                   aria-label={visible ? "Hide password" : "Show password"}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/90 bg-white text-slate-600 hover:bg-slate-100 transition-colors"
                   onClick={() => setVisible((current) => !current)}
                 >
-                  {visible ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {visible ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
 
                 <button
                   type="button"
                   title="Copy password"
                   aria-label="Copy password"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/90 bg-white text-slate-600 hover:bg-slate-100 transition-colors"
                   onClick={() => copy(credentials.zoomPassword, "Password")}
                 >
-                  <Copy size={16} />
+                  <Copy size={15} />
                 </button>
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -197,22 +200,22 @@ function SessionCard({ session, group, credentials, user, role, onError }) {
   }
 
   return (
-    <article className="session-card rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all hover:shadow-md">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+    <article className="session-card rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-sm transition-all hover:shadow-md">
+      <div className="flex flex-wrap items-start justify-between gap-2.5">
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-bold uppercase tracking-wider text-[#483BFF]">
             Session {session.sessionNumber} / 10
           </p>
 
-          <h2 className="mt-1 text-lg font-bold text-slate-900 break-words">{session.groupCode}</h2>
+          <h2 className="mt-1 text-base sm:text-lg font-bold text-slate-900 break-words">{session.groupCode}</h2>
 
-          <p className="text-xs font-medium text-slate-500">
+          <p className="text-xs font-medium text-slate-500 break-words">
             {group?.trackName || session.trackName || "—"}
           </p>
         </div>
 
         <span
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+          className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
             STATUS_COLORS[status] || STATUS_COLORS.Scheduled
           }`}
         >
@@ -220,8 +223,8 @@ function SessionCard({ session, group, credentials, user, role, onError }) {
         </span>
       </div>
 
-      <div className="mt-4 grid gap-2.5 text-xs sm:grid-cols-2">
-        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+      <div className="mt-4 grid gap-2.5 text-xs grid-cols-1 sm:grid-cols-2">
+        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 min-w-0">
           <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Date</span>
           <strong className="mt-0.5 block text-sm font-semibold text-slate-800">{dateLabel(effectiveDate)}</strong>
           {session.overrideDate && (
@@ -231,26 +234,26 @@ function SessionCard({ session, group, credentials, user, role, onError }) {
           )}
         </div>
 
-        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 min-w-0">
           <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Time</span>
           <strong className="mt-0.5 block text-sm font-semibold text-slate-800">{effectiveTime || "—"}</strong>
         </div>
 
-        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 min-w-0">
           <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Coordinator</span>
           <strong className="mt-0.5 block text-sm font-semibold text-slate-800 break-words">
             {group?.coordinatorName || session.coordinatorName || "—"}
           </strong>
         </div>
 
-        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 min-w-0">
           <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Coach</span>
           <strong className="mt-0.5 block text-sm font-semibold text-slate-800 break-words">
             {group?.coachName || session.coachName || "—"}
           </strong>
         </div>
 
-        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 sm:col-span-2">
+        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 sm:col-span-2 min-w-0">
           <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Recorded Attendance</span>
           <strong className="mt-0.5 block text-sm font-semibold text-slate-800">
             {session.attendanceCount != null ? `${session.attendanceCount} students attended` : "Not recorded yet"}
@@ -259,40 +262,40 @@ function SessionCard({ session, group, credentials, user, role, onError }) {
       </div>
 
       {session.notes && (
-        <p className="mt-4 whitespace-pre-wrap rounded-xl border border-slate-100 bg-slate-50 p-3.5 text-xs text-slate-700">
+        <p className="mt-4 whitespace-pre-wrap rounded-xl border border-slate-100 bg-slate-50 p-3.5 text-xs text-slate-700 break-words">
           {session.notes}
         </p>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-2.5">
+      <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2.5">
         {(group?.zoomLink || session.zoomLink) && (
           <a
-            className={BUTTON}
+            className={`${BUTTON} min-h-[44px] flex-1 sm:flex-initial`}
             href={group?.zoomLink || session.zoomLink}
             target="_blank"
             rel="noreferrer"
           >
             <ExternalLink size={15} />
-            Open Zoom
+            <span>Open Zoom</span>
           </a>
         )}
 
         {group?.whatsappLink && (
           <a
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-all"
+            className="inline-flex min-h-[44px] flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-all"
             href={group.whatsappLink}
             target="_blank"
             rel="noreferrer"
           >
             <ExternalLink size={14} />
-            WhatsApp group
+            <span>WhatsApp group</span>
           </a>
         )}
 
         {canEdit && (
           <button
             type="button"
-            className={SECONDARY_BUTTON}
+            className={`${SECONDARY_BUTTON} min-h-[44px] w-full sm:w-auto`}
             onClick={() => setEditing((current) => !current)}
             disabled={saving}
           >
@@ -376,9 +379,13 @@ function SessionCard({ session, group, credentials, user, role, onError }) {
             />
           </label>
 
-          <button type="submit" disabled={saving} className={BUTTON}>
+          <button
+            type="submit"
+            disabled={saving}
+            className={`${BUTTON} min-h-[44px] w-full sm:w-auto`}
+          >
             <Save size={16} />
-            {saving ? "Saving..." : "Save changes"}
+            <span>{saving ? "Saving..." : "Save changes"}</span>
           </button>
         </form>
       )}
@@ -514,7 +521,7 @@ export default function Sessions({
 
   return (
     <section className="sessions-page">
-      <div className="mb-5 flex flex-wrap gap-2 sessions-tabs">
+      <div className="mb-5 flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar sm:flex-wrap sessions-tabs">
         {[
           ["today", "Today"],
           ["upcoming", "Upcoming"],
@@ -528,7 +535,7 @@ export default function Sessions({
               setTab(id);
               setDate("");
             }}
-            className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+            className={`shrink-0 whitespace-nowrap rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all min-h-[44px] inline-flex items-center justify-center ${
               tab === id && !date
                 ? "bg-[#483BFF] text-white shadow-sm shadow-[#483BFF]/30"
                 : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80"

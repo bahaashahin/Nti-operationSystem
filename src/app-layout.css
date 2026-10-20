@@ -1,4 +1,4 @@
-/* Coaching Ops — Modern Responsive SaaS Layout */
+/* Coaching Ops — Modern Mobile-First SaaS Layout */
 :root {
   --brand: #483bff;
   --brand-dark: #3729e6;
@@ -7,12 +7,18 @@
   --text-main: #1e293b;
   --text-muted: #64748b;
   --border-color: #e2e8f0;
+  --bottom-nav-height: 64px;
 }
 
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 html,
@@ -32,6 +38,16 @@ body,
 /* Prevent unwanted page-level horizontal overflow */
 body {
   overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Prevent iOS Safari auto-zoom on input focus */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 /* App Main Container Layout */
@@ -39,55 +55,100 @@ body {
   display: flex;
   min-height: 100vh;
   width: 100%;
+  max-width: 100vw;
   min-width: 0;
+  overflow-x: hidden;
   background-color: var(--bg-page);
 }
 
-/* Desktop Sidebar */
+/* ==========================================================================
+   Desktop Sidebar — Strictly hidden below 1024px (Mobile & Tablet)
+   ========================================================================== */
 .app-sidebar {
-  position: fixed;
-  inset: 0 auto 0 0;
-  z-index: 40;
-  display: flex;
-  flex-direction: column;
-  width: 256px;
-  height: 100vh;
-  background: #171828;
-  color: #fff;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  position: absolute !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+  overflow: hidden !important;
 }
 
-/* App Main Body */
+@media (min-width: 1024px) {
+  .app-sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    z-index: 40 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 256px !important;
+    height: 100vh !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    background: #171828 !important;
+    color: #fff !important;
+    overflow-y: auto !important;
+  }
+}
+
+/* App Main Body — strictly constrained to prevent desktop horizontal overflow at 1366px and above */
 .app-main {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  width: 100% !important;
+  max-width: 100vw !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
 }
 
 @media (min-width: 1024px) {
   .app-main {
-    margin-left: 256px;
+    margin-left: 256px !important;
+    width: calc(100% - 256px) !important;
+    max-width: calc(100% - 256px) !important;
   }
 }
 
 @media (max-width: 1023px) {
   .app-main {
-    margin-left: 0;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
   }
 }
 
 /* Sticky App Topbar */
 .app-topbar {
-  min-height: 64px;
+  min-height: 56px;
+  background-color: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
-/* Content Container */
+@media (min-width: 640px) {
+  .app-topbar {
+    min-height: 64px;
+  }
+}
+
+/* Content Container with mobile bottom-nav padding */
 .app-content {
   width: 100%;
   max-width: 1440px;
   min-width: 0;
   margin: 0 auto;
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 16px) + 24px);
+}
+
+@media (min-width: 1024px) {
+  .app-content {
+    padding-bottom: 32px;
+  }
 }
 
 .app-content > *,
@@ -108,9 +169,72 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Minimum 44px touch targets on interactive controls */
 .app-content a,
-.app-content button {
+.app-content button,
+.app-topbar button {
   touch-action: manipulation;
+}
+
+/* Mobile Bottom Navigation Bar */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.05);
+}
+
+.mobile-bottom-nav-item {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 4px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 150ms ease;
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  touch-action: manipulation;
+}
+
+.mobile-bottom-nav-item.active {
+  color: var(--brand);
+  font-weight: 700;
+}
+
+.mobile-bottom-nav-item.active .mobile-nav-icon-wrap {
+  background: var(--brand-light);
+  color: var(--brand);
+}
+
+.mobile-nav-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 28px;
+  border-radius: 12px;
+  transition: all 150ms ease;
 }
 
 /* Sessions Page Layout */
@@ -121,8 +245,20 @@ body {
 
 .sessions-filters {
   display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)) !important;
-  gap: 14px;
+  grid-template-columns: 1fr !important;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .sessions-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sessions-filters {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+  }
 }
 
 .sessions-filters > label {
@@ -146,18 +282,12 @@ body {
 .sessions-cards {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) !important;
-  gap: 18px;
+  gap: 16px;
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   .sessions-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-}
-
-@media (min-width: 1400px) {
-  .sessions-filters {
-    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
   }
 }
 
@@ -186,6 +316,15 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Utility to hide scrollbars while allowing touch scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Breakpoints for Mobile & Tablet refinement */
 @media (max-width: 640px) {
   .sessions-filters {
@@ -193,15 +332,7 @@ body {
     padding: 14px !important;
   }
 
-  .sessions-tabs button {
-    flex: 1 1 calc(50% - 6px);
-  }
-
   .session-card {
     padding: 16px !important;
-  }
-
-  .app-content textarea {
-    font-size: 13.5px;
   }
 }
