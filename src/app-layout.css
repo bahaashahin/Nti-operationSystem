@@ -2,11 +2,12 @@
 :root {
   --brand: #483bff;
   --brand-dark: #3729e6;
-  --brand-light: #f0efff;
+  --brand-light: #eef2ff;
   --bg-page: #f8f9fc;
-  --text-main: #1e293b;
-  --text-muted: #64748b;
-  --border-color: #e2e8f0;
+  --surface: #ffffff;
+  --text-main: #111827;
+  --text-muted: #6b7280;
+  --border-color: #e5e7eb;
   --bottom-nav-height: 64px;
 }
 

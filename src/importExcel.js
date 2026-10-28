@@ -459,7 +459,8 @@ export function parseWorkbookData(workbook) {
     throw new Error("Invalid Excel workbook.");
   }
 
-  const groupBuckets = new Map();
+  const sheetGroups = [];
+  const sheetStudents = [];
   const invalidRows = [];
   const skippedGroups = [];
 
@@ -498,6 +499,7 @@ export function parseWorkbookData(workbook) {
       }
     }
 
+    const currentSheetBuckets = new Map();
     let activeGroupCode = "";
 
     for (let i = headerIndex + 1; i < grid.length; i++) {
@@ -522,19 +524,19 @@ export function parseWorkbookData(workbook) {
       }
 
       const groupCode = activeGroupCode;
+      const groupKey = norm(groupCode);
 
-      if (!groupBuckets.has(groupCode)) {
-        groupBuckets.set(groupCode, {
+      if (!currentSheetBuckets.has(groupKey)) {
+        currentSheetBuckets.set(groupKey, {
           groupCode,
           sheetName,
           excelRow,
           rows: [],
-          metadata: {},
           students: [],
         });
       }
 
-      const bucket = groupBuckets.get(groupCode);
+      const bucket = currentSheetBuckets.get(groupKey);
       bucket.rows.push({ cells, excelRow, get });
 
       // Gather student row if present
@@ -556,12 +558,8 @@ export function parseWorkbookData(workbook) {
       }
     }
 
-    // Now process all groups found in this sheet
-    for (const [groupCode, bucket] of groupBuckets.entries()) {
-      if (bucket.processed || bucket.sheetName !== sheetName) continue;
-      bucket.processed = true;
-
-      // Extract first non-empty value across all rows for this group
+    // Process all groups found in this sheet
+    for (const [groupKey, bucket] of currentSheetBuckets.entries()) {
       const pick = (key) => {
         for (const r of bucket.rows) {
           const v = r.get(key);
@@ -570,20 +568,23 @@ export function parseWorkbookData(workbook) {
         return "";
       };
 
-      const coordinatorName = val(pick("coordinatorName"));
-      const coordinatorEmail = val(pick("coordinatorEmail")).toLowerCase();
+      let coordinatorName = val(pick("coordinatorName"));
+      let coordinatorEmail = val(pick("coordinatorEmail")).toLowerCase();
 
-      // REQUIREMENT 1.1: Group must have an assigned coordinator
+      // If coordinatorEmail is empty but coordinatorName contains @, use coordinatorName as email
+      if (!coordinatorEmail && coordinatorName.includes("@")) {
+        coordinatorEmail = coordinatorName.toLowerCase();
+      }
+
       const hasCoordinator = Boolean(
-        coordinatorName &&
-        norm(coordinatorName) !== "unknown" &&
-        coordinatorName.trim() !== ""
+        (coordinatorName && norm(coordinatorName) !== "unknown" && coordinatorName.trim() !== "") ||
+        (coordinatorEmail && norm(coordinatorEmail) !== "unknown" && coordinatorEmail.trim() !== "")
       );
 
       if (!hasCoordinator) {
         skippedGroups.push({
           sheetName,
-          groupCode,
+          groupCode: bucket.groupCode,
           excelRow: bucket.excelRow,
           reason: "No Group Coordinator assigned (cell is empty or unassigned)",
         });
@@ -597,7 +598,7 @@ export function parseWorkbookData(workbook) {
       if (!dateParseResult.valid) {
         invalidRows.push({
           sheetName,
-          groupCode,
+          groupCode: bucket.groupCode,
           excelRow: bucket.excelRow,
           reason: dateParseResult.reason,
         });
@@ -622,8 +623,8 @@ export function parseWorkbookData(workbook) {
         val(pick("coachPhone")) ||
         val(bucket.rows[0]?.get("coachPhone"));
 
-      bucket.finalGroup = {
-        groupCode,
+      sheetGroups.push({
+        groupCode: bucket.groupCode,
         batchCode: val(pick("batchCode")) || UNKNOWN,
         expectedStudents:
           count !== "" && Number.isFinite(expected) && expected >= 0
@@ -647,36 +648,59 @@ export function parseWorkbookData(workbook) {
         zoomPassword: val(pick("zoomPassword")),
         sheetName,
         excelRow: bucket.excelRow,
-      };
-    }
-  }
-
-  // Deduplicate and collect final groups and students
-  const validGroups = [];
-  const validStudents = [];
-  const seenStudentKeys = new Set();
-
-  for (const bucket of groupBuckets.values()) {
-    if (bucket.finalGroup) {
-      validGroups.push(bucket.finalGroup);
+      });
 
       for (const st of bucket.students) {
-        const key = `${st.groupCode}:${st.userId || formatPhone(st.mobile) || st.name}`;
-        if (!seenStudentKeys.has(key)) {
-          seenStudentKeys.add(key);
-          validStudents.push({
-            ...st,
-            coordinatorEmail: bucket.finalGroup.coordinatorEmail,
-          });
-        }
+        sheetStudents.push({
+          ...st,
+          coordinatorEmail,
+        });
       }
     }
   }
 
+  // Merge groups across sheets
+  const mergedGroupsMap = new Map();
+  for (const g of sheetGroups) {
+    const key = norm(g.groupCode);
+    if (!mergedGroupsMap.has(key)) {
+      mergedGroupsMap.set(key, { ...g });
+    } else {
+      const existing = mergedGroupsMap.get(key);
+      const merged = { ...existing };
+      for (const [k, v] of Object.entries(g)) {
+        if (v !== "" && v !== UNKNOWN && v !== null && v !== undefined) {
+          merged[k] = v;
+        }
+      }
+      mergedGroupsMap.set(key, merged);
+    }
+  }
+
+  // Deduplicate and collect final students
+  const validStudents = [];
+  const seenStudentKeys = new Set();
+  for (const st of sheetStudents) {
+    const key = `${norm(st.groupCode)}:${st.userId || formatPhone(st.mobile) || norm(st.name)}`;
+    if (!seenStudentKeys.has(key)) {
+      seenStudentKeys.add(key);
+      const finalGroup = mergedGroupsMap.get(norm(st.groupCode));
+      validStudents.push({
+        ...st,
+        coordinatorEmail: finalGroup?.coordinatorEmail || st.coordinatorEmail || "",
+      });
+    }
+  }
+
+  // Any groups that ended up assigned in one of the sheets must NOT be in skippedGroups
+  const finalSkippedGroups = skippedGroups.filter(
+    (sg) => !mergedGroupsMap.has(norm(sg.groupCode)),
+  );
+
   return {
-    groups: validGroups,
+    groups: Array.from(mergedGroupsMap.values()),
     students: validStudents,
-    skippedGroups,
+    skippedGroups: finalSkippedGroups,
     invalidRows,
   };
 }

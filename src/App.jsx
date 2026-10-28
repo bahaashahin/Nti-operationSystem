@@ -46,7 +46,19 @@ import {
   normalizeDate,
   readWorkbook,
 } from "./importExcel";
+import {
+  documentId,
+  hasExcelMetadataChanged,
+  hasStudentChanged,
+  normalizeGroupCode,
+  reconcileWorkbook,
+} from "./syncLogic";
 import OperationsDashboard from "./OperationsDashboard";
+import CoordinatorDashboard from "./components/CoordinatorDashboard";
+import LeadDashboard from "./components/LeadDashboard";
+import ProjectManagerDashboard from "./components/ProjectManagerDashboard";
+import LoginPage from "./components/LoginPage";
+import StatusBadge from "./components/StatusBadge";
 import Sessions, { sessionDate, ZoomCredentials } from "./Sessions";
 import NotificationCenter from "./components/NotificationCenter";
 import ImportReport from "./components/ImportReport";
@@ -79,7 +91,7 @@ const PRIMARY_BUTTON =
   "inline-flex items-center justify-center gap-2 rounded-xl bg-[#483BFF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#3729E6] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 transition-all";
 
 const SECONDARY_BUTTON =
-  "inline-flex items-center justify-center gap-2 rounded-xl bg-[#F0EFFF] px-4 py-2.5 text-sm font-semibold text-[#3729E6] hover:bg-[#E4E1FF] active:scale-[0.99] disabled:opacity-50 transition-all";
+  "inline-flex items-center justify-center gap-2 rounded-xl bg-[#EEF2FF] px-4 py-2.5 text-sm font-semibold text-[#483BFF] hover:bg-[#E0E7FF] active:scale-[0.99] disabled:opacity-50 transition-all";
 
 const INPUT =
   "mt-1.5 block w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition-all focus:border-[#483BFF] focus:ring-2 focus:ring-[#483BFF]/20";
@@ -89,7 +101,7 @@ const NAV_ITEMS = [
     id: "dashboard",
     label: "Dashboard",
     icon: LayoutDashboard,
-    roles: ["lead", "project_manager"],
+    roles: ["lead", "project_manager", "coordinator"],
   },
   {
     id: "groups",
@@ -110,10 +122,6 @@ const NAV_ITEMS = [
     roles: ["lead"],
   },
 ];
-
-function documentId(value) {
-  return encodeURIComponent(String(value)).replaceAll("%", "_");
-}
 
 function studentKey(student) {
   return `${student.groupCode}:${student.userId || formatPhone(student.mobile)}`;
@@ -194,52 +202,6 @@ async function commitOperations(operations) {
 
     await batch.commit();
   }
-}
-
-function hasExcelMetadataChanged(existing, incoming) {
-  if (!existing) return true;
-  const fields = [
-    "batchCode",
-    "expectedStudents",
-    "startDate",
-    "trackName",
-    "coordinatorName",
-    "coordinatorEmail",
-    "day",
-    "time",
-    "zoomLink",
-    "whatsappLink",
-    "tableLink",
-    "coachName",
-    "coachPhone",
-  ];
-  return fields.some((f) => (existing[f] ?? "") !== (incoming[f] ?? ""));
-}
-
-function hasStudentChanged(existing, incoming, newCoordinatorEmail) {
-  if (!existing) return true;
-  if (
-    newCoordinatorEmail &&
-    (existing.coordinatorEmail || "").toLowerCase() !== newCoordinatorEmail.toLowerCase()
-  ) {
-    return true;
-  }
-  const fields = [
-    "name",
-    "mobile",
-    "email",
-    "gender",
-    "studentType",
-    "moduleName",
-    "batch",
-  ];
-  return fields.some((f) => {
-    const incVal = incoming[f];
-    if (incVal !== undefined && incVal !== "" && incVal !== "Unknown") {
-      return (existing[f] ?? "") !== incVal;
-    }
-    return false;
-  });
 }
 
 function SidebarContent({ page, onPageChange, user, role, onClose }) {
@@ -325,88 +287,7 @@ function SidebarContent({ page, onPageChange, user, role, onClose }) {
   );
 }
 
-function Login() {
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function handleLogin(event) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-
-    setError("");
-    setLoading(true);
-
-    try {
-      await signInWithEmailAndPassword(
-        auth,
-        String(form.get("email") || "").trim(),
-        String(form.get("password") || ""),
-      );
-    } catch {
-      setError("Incorrect email or password.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <div className="grid min-h-screen place-items-center bg-[#F8F9FC] p-4 text-slate-900">
-      <form
-        onSubmit={handleLogin}
-        className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-8 shadow-xl shadow-slate-200/50"
-      >
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#F0EFFF] px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#483BFF]">
-          <Sparkles size={13} />
-          <span>Coaching Operations</span>
-        </div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-          Sign in
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Enter your assigned coaching operations account.
-        </p>
-
-        <label className="mt-6 block text-sm font-semibold text-slate-700">
-          Work Email
-          <input
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            placeholder="coordinator@coaching-ops.com"
-            className={INPUT}
-          />
-        </label>
-
-        <label className="mt-4 block text-sm font-semibold text-slate-700">
-          Password
-          <input
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            placeholder="••••••••"
-            className={INPUT}
-          />
-        </label>
-
-        {error && (
-          <p className="mt-4 rounded-xl bg-rose-50 p-3 text-xs font-medium text-rose-700 border border-rose-200">
-            {error}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className={`${PRIMARY_BUTTON} mt-6 w-full py-3`}
-        >
-          {loading ? "Signing in..." : "Sign in to Dashboard"}
-        </button>
-      </form>
-    </div>
-  );
-}
+// Standalone LoginPage imported from ./components/LoginPage
 
 export default function App() {
   const [user, setUser] = useState(undefined);
@@ -431,6 +312,9 @@ export default function App() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [unreadGroupMap, setUnreadGroupMap] = useState(new Map());
+  const [notificationCenterOpen, setNotificationCenterOpen] = useState(false);
+  const [coordinatorNotifications, setCoordinatorNotifications] = useState([]);
+  const [sessionInitialGroup, setSessionInitialGroup] = useState("all");
   const [importReport, setImportReport] = useState(null);
   const [isDesktop, setIsDesktop] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth >= 1024 : false,
@@ -440,7 +324,11 @@ export default function App() {
   const isLead = role === "lead";
   const isProjectManager = role === "project_manager";
   const isCoordinator = role === "coordinator";
-  const canViewDashboard = isLead || isProjectManager;
+  const canViewDashboard = isLead || isProjectManager || isCoordinator;
+
+  const unreadNotificationCount = useMemo(() => {
+    return coordinatorNotifications.filter((n) => !n.read && !n.superseded).length;
+  }, [coordinatorNotifications]);
 
   useEffect(() => onAuthStateChanged(auth, setUser), []);
 
@@ -495,12 +383,7 @@ export default function App() {
 
   useEffect(() => {
     if (!profile) return;
-
-    setPage(
-      profile.role === "lead" || profile.role === "project_manager"
-        ? "dashboard"
-        : "sessions",
-    );
+    setPage("dashboard");
   }, [profile]);
 
   useEffect(() => {
@@ -671,6 +554,13 @@ export default function App() {
   }
 
   function handleSelectGroupFromNotification(code) {
+    const isAssigned = groups.some(
+      (g) => (g.groupCode || "").toLowerCase() === (code || "").toLowerCase(),
+    );
+    if (!isAssigned) {
+      setNotice(`Group ${code} is no longer assigned to your account or has been reassigned.`);
+      return;
+    }
     setGroupDay("all");
     setGroupSearch("");
     setSelectedCode(code);
@@ -695,24 +585,9 @@ export default function App() {
       const {
         groups: importedGroups,
         students: importedStudents,
-        skippedGroups,
-        invalidRows,
+        skippedGroups: parseSkippedGroups,
+        invalidRows: parseInvalidRows,
       } = await readWorkbook(file);
-
-      // Validate workbook groups
-      const incomingGroupMap = new Map();
-      for (const group of importedGroups) {
-        if (incomingGroupMap.has(group.groupCode)) {
-          // Merge metadata if duplicate code across tabs, or retain first
-          const existingMerged = incomingGroupMap.get(group.groupCode);
-          incomingGroupMap.set(group.groupCode, {
-            ...existingMerged,
-            ...group,
-          });
-        } else {
-          incomingGroupMap.set(group.groupCode, group);
-        }
-      }
 
       // Fetch current Firestore state
       const [
@@ -731,326 +606,50 @@ export default function App() {
         getDocs(collection(db, "zoomCredentials")),
       ]);
 
-      const existingGroupMap = new Map(
-        existingGroupsSnap.docs.map((d) => [d.data().groupCode, { id: d.id, ...d.data() }]),
-      );
+      const existingGroups = existingGroupsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const existingStudents = existingStudentsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const existingSessions = existingSessionsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const existingUsers = existingUsersSnap.docs.map((d) => ({ id: d.id, uid: d.id, ...d.data() }));
+      const existingNotifications = existingNotificationsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const existingCredentials = existingCredentialsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-      const existingCredentialsMap = new Map(
-        existingCredentialsSnap.docs.map((d) => [d.data().groupCode, { id: d.id, ...d.data() }]),
-      );
+      const syncResult = reconcileWorkbook({
+        importedGroups,
+        importedStudents,
+        existingGroups,
+        existingStudents,
+        existingSessions,
+        existingUsers,
+        existingNotifications,
+        existingCredentials,
+        timestampProvider: serverTimestamp,
+      });
 
-      const existingSessionIds = new Set(
-        existingSessionsSnap.docs.map((item) => item.id),
-      );
-
-      const existingStudentsByKey = new Map(
-        existingStudentsSnap.docs.map((d) => {
-          const st = d.data();
-          return [studentKey(st), { id: d.id, ...st }];
-        }),
-      );
-
-      const usersByEmail = new Map(
-        existingUsersSnap.docs.map((d) => [
-          (d.data().email || "").toLowerCase(),
-          d.id,
-        ]),
-      );
-
-      const operations = [];
-      let createdGroups = 0;
-      let updatedGroups = 0;
-      let unchangedGroups = 0;
-      let newSessions = 0;
-      let reassignedSessions = 0;
-      let createdStudents = 0;
-      let updatedStudents = 0;
-      let unchangedStudents = 0;
-      let notificationsCreated = 0;
-
-      // 1. Process Groups
-      for (const group of incomingGroupMap.values()) {
-        const { zoomUserId, zoomPassword, sheetName, excelRow, ...publicGroup } = group;
-        const groupId = documentId(group.groupCode);
-        const existingGroup = existingGroupMap.get(group.groupCode);
-
-        if (!existingGroup) {
-          // Genuinely new group
-          operations.push({
-            collectionName: "groups",
-            id: groupId,
-            data: {
-              ...publicGroup,
-              assignmentCount: 1,
-              lastAssignedCoordinatorEmail: group.coordinatorEmail || "",
-              createdAt: serverTimestamp(),
-            },
-          });
-          createdGroups += 1;
-
-          if (zoomUserId || zoomPassword) {
-            operations.push({
-              collectionName: "zoomCredentials",
-              id: groupId,
-              data: {
-                groupCode: group.groupCode,
-                coordinatorEmail: group.coordinatorEmail || "",
-                zoomUserId: zoomUserId || "",
-                zoomPassword: zoomPassword || "",
-              },
-            });
-          }
-
-          // Create 10 weekly sessions
-          for (const operation of sessionOperations(publicGroup)) {
-            operations.push(operation);
-            newSessions += 1;
-          }
-
-          // Deterministic notification for initial assignment (#1)
-          if (group.coordinatorEmail) {
-            operations.push({
-              collectionName: "notifications",
-              id: documentId(`notif:${group.groupCode}:assign:1`),
-              data: {
-                recipientEmail: group.coordinatorEmail,
-                recipientUid: usersByEmail.get(group.coordinatorEmail) || null,
-                groupCode: group.groupCode,
-                type: "assignment",
-                assignmentIndex: 1,
-                title: "New Group Assigned",
-                message: `Group ${group.groupCode} (${group.trackName || "Coaching"}) has been assigned to you.`,
-                groupId,
-                trackName: group.trackName || "",
-                coachName: group.coachName || "",
-                day: group.day || "",
-                time: group.time || "",
-                startDate: group.startDate || "",
-                read: false,
-                createdAt: serverTimestamp(),
-              },
-            });
-            notificationsCreated += 1;
-          }
-        } else {
-          // Existing group: check if coordinator changed or metadata updated
-          const isCoordinatorChanged = Boolean(
-            group.coordinatorEmail &&
-            existingGroup.coordinatorEmail &&
-            existingGroup.coordinatorEmail.toLowerCase() !== group.coordinatorEmail.toLowerCase()
-          );
-
-          const isMetadataChanged = hasExcelMetadataChanged(existingGroup, group);
-
-          if (isCoordinatorChanged) {
-            const nextAssignmentCount = (existingGroup.assignmentCount || 1) + 1;
-            operations.push({
-              collectionName: "groups",
-              id: groupId,
-              data: {
-                ...publicGroup,
-                assignmentCount: nextAssignmentCount,
-                lastAssignedCoordinatorEmail: group.coordinatorEmail,
-                updatedAt: serverTimestamp(),
-              },
-            });
-            updatedGroups += 1;
-
-            // Deterministic notification for this specific reassignment event
-            operations.push({
-              collectionName: "notifications",
-              id: documentId(`notif:${group.groupCode}:assign:${nextAssignmentCount}`),
-              data: {
-                recipientEmail: group.coordinatorEmail,
-                recipientUid: usersByEmail.get(group.coordinatorEmail) || null,
-                groupCode: group.groupCode,
-                type: "reassignment",
-                assignmentIndex: nextAssignmentCount,
-                title: "Group Reassigned",
-                message: `Group ${group.groupCode} (${group.trackName || "Coaching"}) has been reassigned to you.`,
-                groupId,
-                trackName: group.trackName || "",
-                coachName: group.coachName || "",
-                day: group.day || "",
-                time: group.time || "",
-                startDate: group.startDate || "",
-                read: false,
-                createdAt: serverTimestamp(),
-              },
-            });
-            notificationsCreated += 1;
-
-            // Synchronize Zoom credentials access to the new coordinator!
-            if (existingCredentialsMap.has(group.groupCode) || zoomUserId || zoomPassword) {
-              operations.push({
-                collectionName: "zoomCredentials",
-                id: groupId,
-                data: {
-                  groupCode: group.groupCode,
-                  coordinatorEmail: group.coordinatorEmail || "",
-                  ...(zoomUserId ? { zoomUserId } : {}),
-                  ...(zoomPassword ? { zoomPassword } : {}),
-                },
-              });
-            }
-          } else if (isMetadataChanged) {
-            operations.push({
-              collectionName: "groups",
-              id: groupId,
-              data: {
-                ...publicGroup,
-                updatedAt: serverTimestamp(),
-              },
-            });
-            updatedGroups += 1;
-
-            if (zoomUserId || zoomPassword) {
-              operations.push({
-                collectionName: "zoomCredentials",
-                id: groupId,
-                data: {
-                  groupCode: group.groupCode,
-                  coordinatorEmail: group.coordinatorEmail || "",
-                  zoomUserId: zoomUserId || "",
-                  zoomPassword: zoomPassword || "",
-                },
-              });
-            }
-          } else {
-            unchangedGroups += 1;
-          }
-
-          // Create ONLY missing sessions for existing group (never overwrite existing)
-          for (const operation of sessionOperations(publicGroup)) {
-            if (!existingSessionIds.has(operation.id)) {
-              operations.push(operation);
-              newSessions += 1;
-            }
-          }
-        }
-      }
-
-      // 2. Synchronize Existing Sessions for reassigned groups
-      for (const snapshot of existingSessionsSnap.docs) {
-        const session = snapshot.data();
-        const incomingGroup = incomingGroupMap.get(session.groupCode);
-
-        if (
-          incomingGroup &&
-          incomingGroup.coordinatorEmail &&
-          (session.coordinatorEmail || "").toLowerCase() !== incomingGroup.coordinatorEmail.toLowerCase()
-        ) {
-          operations.push({
-            collectionName: "sessions",
-            id: snapshot.id,
-            data: {
-              coordinatorEmail: incomingGroup.coordinatorEmail,
-              coordinatorName: incomingGroup.coordinatorName,
-            },
-          });
-          reassignedSessions += 1;
-        }
-      }
-
-      // 3. Process Students from Workbook
-      for (const st of importedStudents) {
-        const key = studentKey(st);
-        const existingStudent = existingStudentsByKey.get(key);
-        const parentGroup = incomingGroupMap.get(st.groupCode);
-        const coordinatorEmail =
-          parentGroup?.coordinatorEmail || st.coordinatorEmail || "";
-
-        if (!existingStudent) {
-          // New student
-          operations.push({
-            collectionName: "students",
-            id: documentId(key),
-            data: {
-              groupCode: st.groupCode,
-              userId: st.userId || "",
-              name: st.name || "Unnamed",
-              mobile: st.mobile || "",
-              email: st.email || "",
-              gender: st.gender || "",
-              studentType: st.studentType || "",
-              moduleName: st.moduleName || "",
-              batch: st.batch || "",
-              status: "لم يُرسل",
-              coordinatorEmail,
-              createdAt: serverTimestamp(),
-            },
-          });
-          createdStudents += 1;
-        } else if (hasStudentChanged(existingStudent, st, coordinatorEmail)) {
-          // Existing student with changed fields: PRESERVE operational status!
-          operations.push({
-            collectionName: "students",
-            id: existingStudent.id,
-            data: {
-              name: st.name || existingStudent.name,
-              mobile: st.mobile || existingStudent.mobile,
-              email: st.email || existingStudent.email,
-              gender: st.gender || existingStudent.gender,
-              studentType: st.studentType || existingStudent.studentType,
-              moduleName: st.moduleName || existingStudent.moduleName,
-              batch: st.batch || existingStudent.batch,
-              coordinatorEmail,
-              updatedAt: serverTimestamp(),
-            },
-          });
-          updatedStudents += 1;
-        } else {
-          unchangedStudents += 1;
-        }
-      }
-
-      // Also ensure any existing students in Firestore get coordinatorEmail updated if group was reassigned
-      for (const snapshot of existingStudentsSnap.docs) {
-        const student = snapshot.data();
-        const incomingGroup = incomingGroupMap.get(student.groupCode);
-
-        if (
-          incomingGroup &&
-          incomingGroup.coordinatorEmail &&
-          (student.coordinatorEmail || "").toLowerCase() !== incomingGroup.coordinatorEmail.toLowerCase()
-        ) {
-          const alreadyQueued = operations.some(
-            (op) => op.collectionName === "students" && op.id === snapshot.id,
-          );
-          if (!alreadyQueued) {
-            operations.push({
-              collectionName: "students",
-              id: snapshot.id,
-              data: {
-                coordinatorEmail: incomingGroup.coordinatorEmail,
-              },
-            });
-            updatedStudents += 1;
-          }
-        }
-      }
+      const allSkippedGroups = [...parseSkippedGroups, ...syncResult.skippedGroups];
+      const allInvalidRows = [...parseInvalidRows, ...syncResult.invalidRows];
 
       // Execute batch writes safely
-      await commitOperations(operations);
+      await commitOperations(syncResult.operations);
       formElement.reset();
 
       // Show comprehensive results report modal
       setImportReport({
-        createdGroups,
-        updatedGroups,
-        unchangedGroups,
-        skippedGroups,
-        createdStudents,
-        updatedStudents,
-        unchangedStudents,
-        invalidRows,
-        newSessions,
-        reassignedSessions,
-        notificationsCreated,
+        createdGroups: syncResult.createdGroups,
+        updatedGroups: syncResult.updatedGroups,
+        unchangedGroups: syncResult.unchangedGroups,
+        skippedGroups: allSkippedGroups,
+        createdStudents: syncResult.createdStudents,
+        updatedStudents: syncResult.updatedStudents,
+        unchangedStudents: syncResult.unchangedStudents,
+        invalidRows: allInvalidRows,
+        newSessions: syncResult.newSessions,
+        reassignedSessions: syncResult.reassignedSessions,
+        notificationsCreated: syncResult.notificationsCreated,
+        notificationsSuperseded: syncResult.notificationsSuperseded,
       });
 
       setNotice(
-        `Import complete: ${createdGroups} new groups created, ${updatedGroups} updated, ${unchangedGroups} unchanged, ${skippedGroups.length} unassigned groups skipped. All student progress and session attendance were preserved.`,
+        `Import complete: ${syncResult.createdGroups} new groups created, ${syncResult.updatedGroups} updated (${syncResult.notificationsCreated} notifications sent, ${syncResult.notificationsSuperseded} superseded), ${syncResult.unchangedGroups} unchanged, ${allSkippedGroups.length} unassigned groups skipped. All student progress and session attendance were preserved.`,
       );
     } catch (err) {
       setError(
@@ -1132,7 +731,7 @@ export default function App() {
     );
   }
 
-  if (!user) return <Login />;
+  if (!user) return <LoginPage />;
 
   if (!profile || !["lead", "project_manager", "coordinator"].includes(role)) {
     return (
@@ -1157,16 +756,22 @@ export default function App() {
   }
 
   const headings = {
-    dashboard: isProjectManager
+    dashboard: isCoordinator
+      ? "Coordinator Dashboard"
+      : isProjectManager
       ? "Project Manager Dashboard"
-      : "Operations Dashboard",
+      : "Operations Overview",
     groups: "Groups Management",
     sessions: "Sessions Management",
     import: "Import Excel Database",
   };
 
   const descriptions = {
-    dashboard: "Monitor group membership, coordinator workload, and sessions overview.",
+    dashboard: isCoordinator
+      ? "Overview of your assigned groups, sessions, recent assignments, and operational workload."
+      : isProjectManager
+      ? "Track assignments, monitor sessions, and keep operations on schedule."
+      : "Monitor team performance, group progress, and operational activity.",
     groups: "Search and manage assigned groups, student communications, and statuses.",
     sessions: "Manage weekly coaching sessions, Zoom host access, and record attendance.",
     import: "Synchronize groups and students safely from Excel workbook tabs.",
@@ -1247,6 +852,9 @@ export default function App() {
             <NotificationCenter
               user={user}
               role={role}
+              isOpen={notificationCenterOpen}
+              onOpenChange={setNotificationCenterOpen}
+              onNotificationsChange={setCoordinatorNotifications}
               onSelectGroup={handleSelectGroupFromNotification}
               onUnreadMapChange={setUnreadGroupMap}
               onError={setError}
@@ -1303,34 +911,70 @@ export default function App() {
           {/* DASHBOARD PAGE */}
           {canViewDashboard && page === "dashboard" && (
             <>
-              <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {[
-                  ["Today's sessions", sessionSummary.today, Clock],
-                  ["Upcoming scheduled sessions", sessionSummary.upcoming, CalendarDays],
-                  ["Completed sessions", sessionSummary.completed, CheckCircle2],
-                  ["Recorded attendance total", sessionSummary.attendance, UsersRound],
-                ].map(([label, count, Icon]) => (
-                  <div key={label} className={CARD_CLASS}>
-                    <div className="flex items-center justify-between text-slate-500">
-                      <span className="text-xs font-bold uppercase tracking-wider">
-                        {label}
-                      </span>
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F0EFFF] text-[#483BFF]">
-                        <Icon size={18} />
-                      </div>
-                    </div>
-                    <strong className="mt-3 block text-3xl font-extrabold text-[#483BFF] tracking-tight">
-                      {count}
-                    </strong>
-                  </div>
-                ))}
-              </div>
-
-              <OperationsDashboard
-                groups={groups}
-                students={students}
-                mode={isProjectManager ? "project_manager" : "operations"}
-              />
+              {isCoordinator ? (
+                <CoordinatorDashboard
+                  user={user}
+                  profile={profile}
+                  groups={groups}
+                  students={students}
+                  sessions={sessions}
+                  notifications={coordinatorNotifications}
+                  unreadCount={unreadNotificationCount}
+                  onOpenNotifications={() => setNotificationCenterOpen(true)}
+                  onSelectGroup={(code) => {
+                    setSelectedCode(code);
+                    setGroupDay("all");
+                    setGroupSearch("");
+                    setPage("groups");
+                  }}
+                  onNavigateToSessions={(code) => {
+                    setSessionInitialGroup(code || "all");
+                    setPage("sessions");
+                  }}
+                />
+              ) : isProjectManager ? (
+                <ProjectManagerDashboard
+                  user={user}
+                  profile={profile}
+                  groups={groups}
+                  students={students}
+                  sessions={sessions}
+                  notifications={coordinatorNotifications}
+                  unreadCount={unreadNotificationCount}
+                  onOpenNotifications={() => setNotificationCenterOpen(true)}
+                  onSelectGroup={(code) => {
+                    setSelectedCode(code);
+                    setGroupDay("all");
+                    setGroupSearch("");
+                    setPage("groups");
+                  }}
+                  onNavigateToSessions={(code) => {
+                    setSessionInitialGroup(code || "all");
+                    setPage("sessions");
+                  }}
+                />
+              ) : (
+                <LeadDashboard
+                  user={user}
+                  profile={profile}
+                  groups={groups}
+                  students={students}
+                  sessions={sessions}
+                  notifications={coordinatorNotifications}
+                  unreadCount={unreadNotificationCount}
+                  onOpenNotifications={() => setNotificationCenterOpen(true)}
+                  onSelectGroup={(code) => {
+                    setSelectedCode(code);
+                    setGroupDay("all");
+                    setGroupSearch("");
+                    setPage("groups");
+                  }}
+                  onNavigateToSessions={(code) => {
+                    setSessionInitialGroup(code || "all");
+                    setPage("sessions");
+                  }}
+                />
+              )}
             </>
           )}
 
@@ -1362,6 +1006,7 @@ export default function App() {
                 credentials={credentials}
                 user={user}
                 role={role}
+                initialGroupCode={sessionInitialGroup}
                 onError={setError}
               />
             </>
@@ -1731,11 +1376,11 @@ export default function App() {
                               Status
                             </label>
                             {isProjectManager ? (
-                              <span className="inline-block rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">
-                                {STATUS_LABELS[student.status] ||
-                                  student.status ||
-                                  "Not contacted"}
-                              </span>
+                              <StatusBadge
+                                status={student.status}
+                                label={STATUS_LABELS[student.status] || student.status || "Not contacted"}
+                                size="md"
+                              />
                             ) : (
                               <select
                                 value={student.status || "لم يُرسل"}
@@ -1817,11 +1462,11 @@ export default function App() {
 
                               <td className="px-4 py-3">
                                 {isProjectManager ? (
-                                  <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                                    {STATUS_LABELS[student.status] ||
-                                      student.status ||
-                                      "Not contacted"}
-                                  </span>
+                                  <StatusBadge
+                                    status={student.status}
+                                    label={STATUS_LABELS[student.status] || student.status || "Not contacted"}
+                                    size="sm"
+                                  />
                                 ) : (
                                   <select
                                     value={student.status || "لم يُرسل"}

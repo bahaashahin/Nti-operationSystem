@@ -46,9 +46,19 @@ export default function NotificationCenter({
   role,
   onSelectGroup,
   onUnreadMapChange,
+  onNotificationsChange,
+  isOpen,
+  onOpenChange,
   onError,
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isOpen !== undefined ? isOpen : internalOpen;
+  const setOpen = (next) => {
+    const val = typeof next === "function" ? next(open) : next;
+    if (onOpenChange) onOpenChange(val);
+    setInternalOpen(val);
+  };
+
   const [notifications, setNotifications] = useState([]);
   const [updating, setUpdating] = useState(false);
   const panelRef = useRef(null);
@@ -91,12 +101,15 @@ export default function NotificationCenter({
         );
 
         setNotifications(items);
+        if (onNotificationsChange) {
+          onNotificationsChange(items);
+        }
 
-        // Notify parent about unread groups for the "NEW" badge indicator
+        // Notify parent about unread groups for the "NEW" badge indicator (active assignments only)
         if (onUnreadMapChange) {
           const unreadGroupMap = new Map();
           for (const item of items) {
-            if (!item.read && item.groupCode) {
+            if (!item.read && item.groupCode && !item.superseded) {
               unreadGroupMap.set(item.groupCode, true);
             }
           }
@@ -109,7 +122,7 @@ export default function NotificationCenter({
     );
 
     return () => unsubscribe();
-  }, [user, email, onUnreadMapChange, onError]);
+  }, [user, email, onUnreadMapChange, onNotificationsChange, onError]);
 
   // Close on outside click
   useEffect(() => {
@@ -142,7 +155,7 @@ export default function NotificationCenter({
     };
   }, [open]);
 
-  const unreadCount = notifications.filter((item) => !item.read).length;
+  const unreadCount = notifications.filter((item) => !item.read && !item.superseded).length;
 
   async function markAsRead(notification, event) {
     if (event) event.stopPropagation();
@@ -157,7 +170,7 @@ export default function NotificationCenter({
   }
 
   async function markAllAsRead() {
-    const unread = notifications.filter((n) => !n.read);
+    const unread = notifications.filter((n) => !n.read && !n.superseded);
     if (!unread.length || updating) return;
 
     setUpdating(true);
@@ -182,6 +195,14 @@ export default function NotificationCenter({
       markAsRead(notification);
     }
     setOpen(false);
+
+    if (notification.superseded) {
+      if (onError) {
+        onError(`Group ${notification.groupCode} is no longer assigned to your account.`);
+      }
+      return;
+    }
+
     if (onSelectGroup && notification.groupCode) {
       onSelectGroup(notification.groupCode);
     }
@@ -276,7 +297,9 @@ export default function NotificationCenter({
                   key={item.id}
                   onClick={() => handleOpenGroup(item)}
                   className={`group relative flex cursor-pointer items-start gap-3 p-4 transition-colors ${
-                    item.read
+                    item.superseded
+                      ? "bg-slate-50/80 hover:bg-slate-100/80 opacity-80"
+                      : item.read
                       ? "bg-white hover:bg-slate-50"
                       : "bg-[#F8F9FE] hover:bg-[#F0EFFF]/60"
                   }`}
@@ -284,7 +307,7 @@ export default function NotificationCenter({
                   {/* Unread indicator */}
                   <span
                     className={`mt-1.5 h-2 w-2 flex-none rounded-full ${
-                      item.read ? "bg-transparent" : "bg-[#483BFF]"
+                      item.superseded || item.read ? "bg-transparent" : "bg-[#483BFF]"
                     }`}
                   />
 
@@ -295,7 +318,11 @@ export default function NotificationCenter({
                         <span className="rounded-md bg-[#483BFF]/10 px-2 py-0.5 text-xs font-bold text-[#3729E6]">
                           {item.groupCode}
                         </span>
-                        {item.type === "reassignment" ? (
+                        {item.superseded ? (
+                          <span className="rounded-md bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                            Superseded
+                          </span>
+                        ) : item.type === "reassignment" ? (
                           <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
                             Reassigned
                           </span>
@@ -310,11 +337,23 @@ export default function NotificationCenter({
                       </span>
                     </div>
 
-                    <p className="mt-1.5 text-sm font-medium text-slate-800">
+                    <p
+                      className={`mt-1.5 text-sm font-medium ${
+                        item.superseded
+                          ? "text-slate-500 line-through decoration-slate-300"
+                          : "text-slate-800"
+                      }`}
+                    >
                       {item.message || `Group ${item.groupCode} assigned to you.`}
                     </p>
 
-                    {(item.trackName || item.coachName || item.day || item.time) && (
+                    {item.superseded && (
+                      <p className="mt-1 text-xs font-medium text-amber-700">
+                        This group was reassigned and is no longer assigned to your account.
+                      </p>
+                    )}
+
+                    {!item.superseded && (item.trackName || item.coachName || item.day || item.time) && (
                       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                         {item.trackName && (
                           <span className="rounded bg-slate-100 px-1.5 py-0.5">
@@ -331,10 +370,16 @@ export default function NotificationCenter({
                     )}
 
                     <div className="mt-2 flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#483BFF] group-hover:underline">
-                        View group details
-                        <ChevronRight size={13} />
-                      </span>
+                      {item.superseded ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-400">
+                          Reassigned away · Not actionable
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#483BFF] group-hover:underline">
+                          View group details
+                          <ChevronRight size={13} />
+                        </span>
+                      )}
 
                       {!item.read && (
                         <button

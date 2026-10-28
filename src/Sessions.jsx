@@ -399,15 +399,23 @@ export default function Sessions({
   credentials,
   user,
   role,
+  initialGroupCode = "all",
   onError,
 }) {
-  const [tab, setTab] = useState("today");
+  const [tab, setTab] = useState(initialGroupCode !== "all" ? "all" : "today");
   const [date, setDate] = useState("");
-  const [groupCode, setGroupCode] = useState("all");
+  const [groupCode, setGroupCode] = useState(initialGroupCode);
   const [coordinator, setCoordinator] = useState("all");
   const [day, setDay] = useState("all");
   const [search, setSearch] = useState("");
   const [today, setToday] = useState(cairoToday);
+
+  useEffect(() => {
+    if (initialGroupCode && initialGroupCode !== "all") {
+      setGroupCode(initialGroupCode);
+      setTab("all");
+    }
+  }, [initialGroupCode]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setToday(cairoToday()), 30000);

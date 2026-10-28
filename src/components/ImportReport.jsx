@@ -28,6 +28,7 @@ export default function ImportReport({ report, onClose }) {
     newSessions = 0,
     reassignedSessions = 0,
     notificationsCreated = 0,
+    notificationsSuperseded = 0,
   } = report;
 
   const totalGroupsProcessed =
@@ -131,7 +132,14 @@ export default function ImportReport({ report, onClose }) {
             </div>
             <div className="rounded-lg bg-slate-50 p-2.5">
               <span className="text-slate-500">Notifications Sent:</span>{" "}
-              <strong className="text-slate-800">{notificationsCreated}</strong>
+              <strong className="text-slate-800">
+                {notificationsCreated}
+                {notificationsSuperseded > 0 && (
+                  <span className="ml-1 text-[11px] font-normal text-amber-700">
+                    ({notificationsSuperseded} superseded)
+                  </span>
+                )}
+              </strong>
             </div>
           </div>
 
